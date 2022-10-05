@@ -6,7 +6,8 @@ import { Select } from '../../common/Select/Select'
 import { TextArea } from '../../common/TextArea/TextArea'
 import { regFormValidations } from '../../validations/regFormValidations'
 import { ServerCall } from '../../shared/ServerCall'
-import {toast} from 'react-toastify'
+import { toast } from 'react-toastify'
+import { appStore } from '../../store/appStore'
 
 const inputValues = [
   {
@@ -138,22 +139,34 @@ export const Register = () => {
     })
     fnPrepareTemplate()
     if (!isFormValid) return
+    appStore.dispatch({
+      type: 'LOADER',
+      payload: true
+    })
     ServerCall.sendPost("dbops/insert-std", { payload: dataObj })
       .then((res) => {
-        const{acknowledged,insertedId}=res.data
-        if(acknowledged && insertedId){
+        appStore.dispatch({
+          type: 'LOADER',
+          payload: false
+        })
+        const { acknowledged, insertedId } = res.data
+        if (acknowledged && insertedId) {
           toast.success('Document successfully inserted')
-          inputValues.forEach((obj)=>{
-            obj.val=''
-            obj.errorMsg=''
-            obj.isShowError=false
+          inputValues.forEach((obj) => {
+            obj.val = ''
+            obj.errorMsg = ''
+            obj.isShowError = false
           })
           fnPrepareTemplate()
-        }else{
+        } else {
           toast.info('Document not inserted, try again')
         }
       })
       .catch((error) => {
+        appStore.dispatch({
+          type: 'LOADER',
+          payload: false
+        })
         toast.error('Unable to establish connection with Server')
         console.log(error)
       })
